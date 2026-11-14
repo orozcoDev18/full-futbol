@@ -82,7 +82,7 @@ const PANEL_OPTIONS = [
 const STEPS = [
   {
     title: "Crear el torneo",
-    what: "Nombre y temporada. Queda con su enlace público propio.",
+    what: "Nombre, temporada y la cancha habitual, que después se propone sola en cada partido. Todo eso se puede editar luego desde el menú del torneo.",
   },
   {
     title: "Inscribir equipos",
@@ -94,7 +94,7 @@ const STEPS = [
   },
   {
     title: "Programar las fechas",
-    what: "En Próximos le pones día, hora y cancha a cada partido, o a toda una jornada de una vez diciendo a qué hora empieza y cada cuántos minutos sale el siguiente.",
+    what: "En Próximos le pones día, hora y cancha a cada partido, o a toda una jornada de una vez diciendo a qué hora empieza y cada cuántos minutos sale el siguiente. La cancha del torneo viene puesta; la cambias solo si ese partido se juega en otra.",
   },
   {
     title: "Cargar las actas",

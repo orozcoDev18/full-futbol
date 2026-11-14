@@ -98,6 +98,13 @@ export default async function DashboardPage() {
               className="w-full"
               aria-label="Temporada"
             />
+            <input
+              name="venue"
+              maxLength={60}
+              placeholder="Cancha habitual (opcional)"
+              className="w-full"
+              aria-label="Cancha habitual"
+            />
             <button type="submit" className="btn-primary w-full">
               Crear torneo
             </button>

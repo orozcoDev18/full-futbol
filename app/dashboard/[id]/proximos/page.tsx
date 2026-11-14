@@ -13,7 +13,7 @@ export default async function ProximosPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireTournament(id);
+  const tournament = await requireTournament(id);
 
   const matches = await prisma.match.findMany({
     where: { tournamentId: id, status: "SCHEDULED" },
@@ -43,6 +43,9 @@ export default async function ProximosPage({
       <p className="text-sm text-neutral-400">
         Toca un partido para ponerle día, hora y cancha. Se ve en la web
         pública. Hora de Colombia.
+        {tournament.venue
+          ? ` La cancha del torneo (${tournament.venue}) viene puesta por defecto.`
+          : ""}
       </p>
 
       {rounds.map((key) => {
@@ -89,6 +92,7 @@ export default async function ProximosPage({
                 <input
                   name="venue"
                   maxLength={60}
+                  defaultValue={tournament.venue ?? ""}
                   placeholder="Cancha (opcional)"
                   className="w-full"
                   aria-label="Cancha"
@@ -106,6 +110,7 @@ export default async function ProximosPage({
                   <ScheduleCard
                     tournamentId={id}
                     match={match}
+                    defaultVenue={tournament.venue}
                     actaHref={`/dashboard/${id}/actas/${match.id}`}
                   />
                 </li>
@@ -126,6 +131,7 @@ export default async function ProximosPage({
                 <ScheduleCard
                   tournamentId={id}
                   match={match}
+                  defaultVenue={tournament.venue}
                   actaHref={
                     match.homeTeam && match.awayTeam
                       ? `/dashboard/${id}/actas/${match.id}`
@@ -154,10 +160,12 @@ interface ScheduleMatch {
 function ScheduleCard({
   tournamentId,
   match,
+  defaultVenue,
   actaHref,
 }: {
   tournamentId: string;
   match: ScheduleMatch;
+  defaultVenue: string | null;
   actaHref?: string;
 }) {
   return (
@@ -208,7 +216,7 @@ function ScheduleCard({
             <input
               name="venue"
               maxLength={60}
-              defaultValue={match.venue ?? ""}
+              defaultValue={match.venue ?? defaultVenue ?? ""}
               placeholder="Cancha del barrio"
               className="w-full"
             />

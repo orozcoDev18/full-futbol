@@ -94,6 +94,8 @@ model Tournament {
   name           String
   slug           String           @unique
   season         String?
+  /// Cancha habitual: se propone al programar los partidos.
+  venue          String?          @db.VarChar(60)
   status         TournamentStatus @default(ACTIVE)
   groupCount     Int              @default(1)
   championTeamId String?          @unique

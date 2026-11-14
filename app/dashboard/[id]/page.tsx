@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireTournament } from "@/lib/org";
+import { updateTournament } from "../actions";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
@@ -10,7 +11,7 @@ export default async function TournamentHubPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireTournament(id);
+  const tournament = await requireTournament(id);
 
   const [teams, played, pending, knockout, posts] = await Promise.all([
     prisma.team.count({ where: { tournamentId: id } }),
@@ -87,7 +88,57 @@ export default async function TournamentHubPage({
   ];
 
   return (
-    <main className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+    <>
+      <details className="card mb-4">
+        <summary className="cursor-pointer text-sm font-semibold text-neutral-300">
+          Editar torneo
+          {tournament.venue ? ` · 📍 ${tournament.venue}` : ""}
+        </summary>
+        <form action={updateTournament} className="mt-3 space-y-2">
+          <input type="hidden" name="tournamentId" value={id} />
+          <label className="block">
+            <span className="label">Nombre</span>
+            <input
+              name="name"
+              required
+              maxLength={80}
+              defaultValue={tournament.name}
+              className="w-full"
+            />
+          </label>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <label className="min-w-0 flex-1">
+              <span className="label">Temporada</span>
+              <input
+                name="season"
+                maxLength={40}
+                defaultValue={tournament.season ?? ""}
+                placeholder="2026"
+                className="w-full"
+              />
+            </label>
+            <label className="min-w-0 flex-1">
+              <span className="label">Cancha habitual</span>
+              <input
+                name="venue"
+                maxLength={60}
+                defaultValue={tournament.venue ?? ""}
+                placeholder="Cancha del barrio"
+                className="w-full"
+              />
+            </label>
+          </div>
+          <p className="text-xs text-neutral-500">
+            La cancha habitual se propone al programar los partidos; cada
+            partido puede jugarse en otra.
+          </p>
+          <button type="submit" className="btn-primary w-full">
+            Guardar torneo
+          </button>
+        </form>
+      </details>
+
+      <main className="grid grid-cols-2 gap-3 sm:grid-cols-3">
       {tiles.map((tile) => (
         <Link
           key={tile.href}
@@ -105,6 +156,7 @@ export default async function TournamentHubPage({
           </span>
         </Link>
       ))}
-    </main>
+      </main>
+    </>
   );
 }
