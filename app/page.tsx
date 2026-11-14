@@ -121,7 +121,10 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <footer className="mt-10 text-center text-xs text-neutral-600">
+      <footer className="mt-10 flex flex-col items-center gap-2 text-xs text-neutral-600">
+        <Link href="/guia" className="text-sm text-pitch-light underline">
+          Cómo funciona Full Fútbol
+        </Link>
         <Link href="/login" className="underline">
           Entrar al panel del organizador
         </Link>

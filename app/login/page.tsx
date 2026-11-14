@@ -67,12 +67,14 @@ export default function LoginPage() {
         <SubmitButton />
       </form>
 
-      <Link
-        href="/"
-        className="mt-6 text-center text-sm text-neutral-400 underline"
-      >
-        Ver torneos y noticias sin iniciar sesión
-      </Link>
+      <div className="mt-6 flex flex-col items-center gap-2 text-sm">
+        <Link href="/guia" className="text-pitch-light underline">
+          Cómo funciona Full Fútbol
+        </Link>
+        <Link href="/" className="text-neutral-400 underline">
+          Ver torneos y noticias sin iniciar sesión
+        </Link>
+      </div>
     </main>
   );
 }
