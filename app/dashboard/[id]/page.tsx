@@ -129,8 +129,9 @@ export default async function TournamentHubPage({
             </label>
           </div>
           <p className="text-xs text-neutral-500">
-            La cancha habitual se propone al programar los partidos; cada
-            partido puede jugarse en otra.
+            Al guardar, los partidos que faltan por jugar pasan a esta
+            cancha; los ya jugados conservan la suya. Si algún partido se
+            juega en otro lado, cámbialo después en Próximos.
           </p>
           <button type="submit" className="btn-primary w-full">
             Guardar torneo

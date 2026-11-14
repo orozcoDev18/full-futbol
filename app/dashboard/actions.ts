@@ -37,9 +37,20 @@ export async function updateTournament(formData: FormData) {
 
   if (!name) throw new Error("El nombre del torneo es obligatorio");
 
-  const tournament = await prisma.tournament.update({
-    where: { id: tournamentId },
-    data: { name, season: season || null, venue: venue || null },
+  const tournament = await prisma.$transaction(async (tx) => {
+    const updated = await tx.tournament.update({
+      where: { id: tournamentId },
+      data: { name, season: season || null, venue: venue || null },
+    });
+    // La cancha nueva baja a los partidos que faltan por jugar; los jugados
+    // conservan dónde se jugaron. Vaciarla no borra la de los partidos.
+    if (venue) {
+      await tx.match.updateMany({
+        where: { tournamentId, status: "SCHEDULED" },
+        data: { venue },
+      });
+    }
+    return updated;
   });
 
   revalidatePath("/dashboard");
