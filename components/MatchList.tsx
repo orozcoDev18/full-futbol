@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { formatMatchDate } from "@/lib/schedule";
 import type { DisciplineRow, ScorerRow } from "@/lib/tournament-engine";
 
 export const PHASE_LABEL: Record<string, string> = {
@@ -16,6 +17,7 @@ export interface ListMatch {
   round: number | null;
   label: string | null;
   date: Date | null;
+  venue?: string | null;
   status: string;
   homeGoals: number;
   awayGoals: number;
@@ -42,14 +44,8 @@ export function MatchRow({
   const caption = [
     match.label,
     match.groupName && !hideGroup ? `Grupo ${match.groupName}` : null,
-    match.date
-      ? new Intl.DateTimeFormat("es", {
-          day: "2-digit",
-          month: "short",
-          hour: "2-digit",
-          minute: "2-digit",
-        }).format(match.date)
-      : null,
+    match.date ? formatMatchDate(match.date) : null,
+    match.venue ?? null,
   ]
     .filter(Boolean)
     .join(" · ");

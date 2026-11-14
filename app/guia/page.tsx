@@ -55,7 +55,7 @@ const PANEL_OPTIONS = [
   {
     icon: "📅",
     name: "Próximos",
-    what: "Lo que falta por jugar.",
+    what: "Lo que falta por jugar, y donde le pones día, hora y cancha a cada partido o a la jornada entera.",
   },
   {
     icon: "🥇",
@@ -91,6 +91,10 @@ const STEPS = [
   {
     title: "Sortear",
     what: "Si se apuntaron más equipos de los que caben, primero la eliminatoria previa: un partido por pareja y el impar pasa sin jugar. Después el sorteo de grupos, que solo reparte a los clasificados.",
+  },
+  {
+    title: "Programar las fechas",
+    what: "En Próximos le pones día, hora y cancha a cada partido, o a toda una jornada de una vez diciendo a qué hora empieza y cada cuántos minutos sale el siguiente.",
   },
   {
     title: "Cargar las actas",
