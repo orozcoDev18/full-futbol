@@ -45,7 +45,6 @@ export function MatchRow({
     match.label,
     match.groupName && !hideGroup ? `Grupo ${match.groupName}` : null,
     match.date ? formatMatchDate(match.date) : null,
-    match.venue ?? null,
   ]
     .filter(Boolean)
     .join(" · ");
@@ -61,6 +60,12 @@ export function MatchRow({
       {caption && (
         <p className="mb-1 text-[11px] uppercase tracking-wide text-neutral-500">
           {caption}
+        </p>
+      )}
+      {match.venue && (
+        <p className="mb-1.5 flex items-center gap-1 text-xs font-semibold text-pitch-light">
+          <span aria-hidden="true">📍</span>
+          <span className="truncate">{match.venue}</span>
         </p>
       )}
       <div className="flex items-center gap-2">
