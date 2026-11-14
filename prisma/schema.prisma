@@ -1,0 +1,197 @@
+// Full Fútbol — SaaS multi-tenant de torneos amateur
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum TournamentStatus {
+  ACTIVE
+  FINISHED
+}
+
+enum MatchPhase {
+  /// Eliminatoria previa: se juega antes de los grupos y filtra inscritos.
+  PRELIM
+  GROUP
+  QUARTER
+  SEMI
+  FINAL
+}
+
+enum MatchStatus {
+  SCHEDULED
+  PLAYED
+}
+
+enum MatchEventType {
+  GOAL
+  YELLOW_CARD
+  RED_CARD
+}
+
+enum BracketSlot {
+  HOME
+  AWAY
+}
+
+enum UserRole {
+  ADMIN
+  SUPER_ADMIN
+}
+
+model User {
+  id             String   @id @default(cuid())
+  organizationId String
+  username       String   @unique
+  name           String
+  passwordHash   String   @db.VarChar(255)
+  role           UserRole @default(ADMIN)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+/// Noticia del torneo; se ve en la web pública sin login.
+model Post {
+  id           String    @id @default(cuid())
+  tournamentId String
+  title        String    @db.VarChar(180)
+  body         String    @db.Text
+  imageUrl     String?   @db.VarChar(512)
+  publishedAt  DateTime  @default(now())
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  tournament Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+
+  @@index([tournamentId, publishedAt])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  tournaments Tournament[]
+  users       User[]
+}
+
+model Tournament {
+  id             String           @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String           @unique
+  season         String?
+  status         TournamentStatus @default(ACTIVE)
+  groupCount     Int              @default(1)
+  championTeamId String?          @unique
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  championTeam Team?        @relation("TournamentChampion", fields: [championTeamId], references: [id], onDelete: SetNull)
+  teams        Team[]
+  matches      Match[]
+  posts        Post[]
+
+  @@index([organizationId])
+}
+
+model Team {
+  id           String   @id @default(cuid())
+  tournamentId String
+  name         String
+  groupName    String?  @db.VarChar(8)
+  shortName    String?
+  logoUrl      String?  @db.VarChar(512)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  tournament  Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  players     Player[]
+  homeMatches Match[]      @relation("HomeTeam")
+  awayMatches Match[]      @relation("AwayTeam")
+  wonMatches  Match[]      @relation("MatchWinner")
+  events      MatchEvent[]
+  championOf  Tournament?  @relation("TournamentChampion")
+
+  @@unique([tournamentId, name])
+  @@index([tournamentId])
+}
+
+model Player {
+  id        String   @id @default(cuid())
+  teamId    String
+  name      String
+  number    Int
+  document  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  team   Team         @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  events MatchEvent[]
+
+  @@unique([teamId, number])
+  @@index([teamId])
+}
+
+model Match {
+  id           String      @id @default(cuid())
+  tournamentId String
+  phase        MatchPhase  @default(GROUP)
+  groupName    String?     @db.VarChar(8)
+  round        Int? // jornada (solo fase de grupos)
+  label        String? // "Cuartos 1", "Semifinal B"...
+  date         DateTime?
+  venue        String?
+  /// Vacío en una llave hasta que se conoce el ganador que ocupa el hueco.
+  homeTeamId   String?
+  awayTeamId   String?
+  homeGoals    Int         @default(0)
+  awayGoals    Int         @default(0)
+  status       MatchStatus @default(SCHEDULED)
+  /// Quién pasa de ronda cuando el partido de eliminación acaba empatado.
+  winnerTeamId String?
+  /// Partido al que va el ganador de este, y en qué lado entra.
+  nextMatchId  String?
+  nextSlot     BracketSlot?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  tournament Tournament   @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  homeTeam   Team?        @relation("HomeTeam", fields: [homeTeamId], references: [id], onDelete: Cascade)
+  awayTeam   Team?        @relation("AwayTeam", fields: [awayTeamId], references: [id], onDelete: Cascade)
+  winnerTeam Team?        @relation("MatchWinner", fields: [winnerTeamId], references: [id], onDelete: SetNull)
+  nextMatch  Match?       @relation("Bracket", fields: [nextMatchId], references: [id], onDelete: SetNull)
+  feeders    Match[]      @relation("Bracket")
+  events     MatchEvent[]
+
+  @@index([tournamentId, phase, round])
+  @@index([nextMatchId])
+}
+
+model MatchEvent {
+  id        String         @id @default(cuid())
+  matchId   String
+  teamId    String
+  playerId  String
+  type      MatchEventType
+  minute    Int?
+  createdAt DateTime       @default(now())
+
+  match  Match  @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  team   Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  player Player @relation(fields: [playerId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@index([playerId])
+}
