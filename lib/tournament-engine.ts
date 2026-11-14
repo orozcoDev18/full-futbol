@@ -3,7 +3,7 @@
  * Acepta tipos estructurales, así que los objetos de Prisma encajan tal cual.
  */
 
-export type MatchPhase = "GROUP" | "QUARTER" | "SEMI" | "FINAL";
+export type MatchPhase = "PRELIM" | "GROUP" | "QUARTER" | "SEMI" | "FINAL";
 export type MatchStatus = "SCHEDULED" | "PLAYED";
 export type MatchEventType = "GOAL" | "YELLOW_CARD" | "RED_CARD";
 

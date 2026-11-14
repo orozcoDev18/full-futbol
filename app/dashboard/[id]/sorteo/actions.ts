@@ -48,11 +48,11 @@ export async function saveDraw(formData: FormData) {
   }
 
   // Con fase previa, a los grupos solo entran los que la superaron.
-  const tournament = await getTournamentById(tournamentId);
-  if (!tournament) throw new Error("Torneo no encontrado");
+  const full = await getTournamentById(tournamentId);
+  if (!full) throw new Error("Torneo no encontrado");
   const prelim = qualifiedFromPrelim(
-    tournament.matches,
-    tournament.teams.map((team) => team.id),
+    full.matches,
+    full.teams.map((team) => team.id),
   );
   if (prelim.pending > 0) {
     throw new Error(

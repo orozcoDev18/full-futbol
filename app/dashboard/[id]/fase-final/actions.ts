@@ -119,7 +119,7 @@ export async function generateBracket(formData: FormData) {
 
   await prisma.$transaction(async (tx) => {
     await tx.match.deleteMany({
-      where: { tournamentId, phase: { not: "GROUP" } },
+      where: { tournamentId, phase: { in: ["QUARTER", "SEMI", "FINAL"] } },
     });
 
     const idByKey = new Map<string, string>();

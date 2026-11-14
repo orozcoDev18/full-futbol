@@ -23,7 +23,7 @@ const TABS = [
   { key: "posiciones", label: "Posiciones" },
   { key: "goleadores", label: "Goleadores" },
   { key: "partidos", label: "Partidos" },
-  { key: "final", label: "Fase Final" },
+  { key: "final", label: "Eliminatorias" },
   { key: "noticias", label: "Noticias" },
 ] as const;
 
@@ -80,7 +80,7 @@ export default async function TorneoPublicoPage({
   const groupMatches = tournament.matches.filter(
     (match) => match.phase === "GROUP",
   );
-  const knockoutPhases = ["QUARTER", "SEMI", "FINAL"].filter((phase) =>
+  const knockoutPhases = ["PRELIM", "QUARTER", "SEMI", "FINAL"].filter((phase) =>
     tournament.matches.some((match) => match.phase === phase),
   );
 

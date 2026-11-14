@@ -75,7 +75,7 @@ export async function syncChampion(tx: Tx, tournamentId: string) {
 /** Partidos de la llave con sus equipos, en orden de ronda. */
 export function knockoutMatches(tournamentId: string) {
   return prisma.match.findMany({
-    where: { tournamentId, phase: { not: "GROUP" } },
+    where: { tournamentId, phase: { in: ["QUARTER", "SEMI", "FINAL"] } },
     orderBy: [{ phase: "asc" }, { label: "asc" }, { createdAt: "asc" }],
     include: { homeTeam: true, awayTeam: true },
   });

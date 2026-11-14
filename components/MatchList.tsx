@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ScorerRow } from "@/lib/tournament-engine";
 
 export const PHASE_LABEL: Record<string, string> = {
+  PRELIM: "Fase previa",
   GROUP: "Fase de grupos",
   QUARTER: "Cuartos de final",
   SEMI: "Semifinales",

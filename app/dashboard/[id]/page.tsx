@@ -17,7 +17,7 @@ export default async function TournamentHubPage({
     prisma.match.count({ where: { tournamentId: id, status: "PLAYED" } }),
     prisma.match.count({ where: { tournamentId: id, status: "SCHEDULED" } }),
     prisma.match.count({
-      where: { tournamentId: id, phase: { not: "GROUP" } },
+      where: { tournamentId: id, phase: { in: ["QUARTER", "SEMI", "FINAL"] } },
     }),
     prisma.post.count({ where: { tournamentId: id } }),
   ]);
@@ -33,7 +33,7 @@ export default async function TournamentHubPage({
       href: `/dashboard/${id}/sorteo`,
       icon: "🎲",
       title: "Sorteo",
-      sub: "Grupos y calendario",
+      sub: "Previa, grupos y calendario",
       accent: true,
     },
     {

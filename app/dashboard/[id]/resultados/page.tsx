@@ -34,7 +34,7 @@ export default async function ResultadosPage({
       {knockout.length > 0 && (
         <section>
           <h3 className="mb-2 text-xs font-bold uppercase tracking-widest text-neutral-400">
-            Fase final
+            Eliminatorias
           </h3>
           <ul className="space-y-2">
             {knockout.map((match) => (

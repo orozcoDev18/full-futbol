@@ -1,6 +1,8 @@
+import { notFound } from "next/navigation";
 import { Empty } from "@/components/MatchList";
-import { requireTournament } from "@/lib/org";
-import { prisma } from "@/lib/prisma";
+import { requireUser } from "@/lib/auth";
+import { getTournamentById } from "@/lib/queries";
+import { qualifiedFromPrelim } from "@/lib/tournament-engine";
 import DrawBoard from "./DrawBoard";
 
 export const dynamic = "force-dynamic";
@@ -11,13 +13,14 @@ export default async function SorteoPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  await requireTournament(id);
+  const user = await requireUser();
+  const tournament = await getTournamentById(id, user.organizationId);
+  if (!tournament) notFound();
 
-  const teams = await prisma.team.findMany({
-    where: { tournamentId: id },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true },
-  });
+  const teams = tournament.teams.map((team) => ({
+    id: team.id,
+    name: team.name,
+  }));
 
   if (teams.length < 2) {
     return (
@@ -29,9 +32,21 @@ export default async function SorteoPage({
     );
   }
 
+  const prelim = qualifiedFromPrelim(
+    tournament.matches,
+    teams.map((team) => team.id),
+  );
+
   return (
     <main>
-      <DrawBoard tournamentId={id} teams={teams} />
+      <DrawBoard
+        tournamentId={id}
+        teams={teams}
+        qualifiedIds={prelim.qualified}
+        eliminatedIds={prelim.eliminated}
+        prelimPending={prelim.pending}
+        hasPrelim={tournament.matches.some((match) => match.phase === "PRELIM")}
+      />
     </main>
   );
 }

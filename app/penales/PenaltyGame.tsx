@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Ball } from "@/components/Logo";
-import { Confetti, Keeper, Striker } from "./Figures";
+import { Confetti, Keeper, Shadow, Striker } from "./Figures";
 
 /** Seis zonas de la portería: arriba y abajo por izquierda, centro y derecha. */
 const ZONES = [
@@ -108,7 +108,6 @@ export default function PenaltyGame() {
   const keeperZone = shot ? zoneOf(shot.keeper) : null;
   const won = you > cpu;
   const result = won ? "¡Ganaste la tanda!" : you < cpu ? "Perdiste la tanda" : "Empate";
-  const shooterColor = phase === "save" ? "#e11d48" : "#12a05a";
 
   return (
     <div className="space-y-4">
@@ -135,47 +134,76 @@ export default function PenaltyGame() {
       </div>
 
       {/* Escena: portería, portero, pateador y balón */}
-      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl border border-neutral-800 bg-gradient-to-b from-sky-950/60 via-neutral-900 to-pitch-dark/70 sm:aspect-[16/10]">
-        {/* césped */}
-        <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-b from-pitch-dark/80 to-pitch/50" />
-        <div className="absolute inset-x-[12%] bottom-[30%] h-[1px] bg-white/25" />
+      <div className="relative aspect-[4/3] w-full overflow-hidden rounded-3xl border border-neutral-700/80 bg-[radial-gradient(ellipse_at_50%_0%,#1e3a5f_0%,#0b1220_55%,#070b12_100%)] shadow-[inset_0_2px_40px_rgba(0,0,0,0.6)] sm:aspect-[16/10]">
+        {/* haz de luz de los focos */}
+        <div className="pointer-events-none absolute -top-1/3 left-1/2 h-[90%] w-[120%] -translate-x-1/2 rounded-[50%] bg-white/[0.06] blur-2xl" />
 
-        {/* portería */}
-        <div
-          className={`absolute left-[8%] right-[8%] top-[10%] h-[58%] rounded-t-md border-x-4 border-t-4 border-neutral-100/90 ${
-            shot?.scored ? "ff-net-shake" : ""
-          }`}
-        >
+        {/* césped con franjas de corte */}
+        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-b from-[#0e7a44] to-[#064e2a]">
           <div
             className="absolute inset-0 opacity-30"
             style={{
               backgroundImage:
-                "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-              backgroundSize: "8% 14%",
+                "repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 8%, transparent 8% 16%)",
             }}
           />
+          <div className="absolute inset-x-[6%] top-0 h-[2px] bg-white/30" />
+          <div className="absolute left-1/2 top-[52%] h-2 w-2 -translate-x-1/2 rounded-full bg-white/70" />
+        </div>
+
+        {/* portería */}
+        <div
+          className={`absolute left-[9%] right-[9%] top-[12%] h-[56%] ${
+            shot?.scored ? "ff-net-shake" : ""
+          }`}
+        >
+          {/* red */}
+          <div
+            className="absolute inset-0 rounded-t-sm bg-white/[0.04]"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(60deg, rgba(255,255,255,0.22) 0 1px, transparent 1px 9px), repeating-linear-gradient(-60deg, rgba(255,255,255,0.22) 0 1px, transparent 1px 9px)",
+              maskImage:
+                "linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,0,0,0.55))",
+              WebkitMaskImage:
+                "linear-gradient(to bottom, rgba(0,0,0,0.95), rgba(0,0,0,0.55))",
+            }}
+          />
+          {/* postes y travesaño */}
+          <div className="absolute inset-y-0 left-0 w-[6px] rounded-full bg-gradient-to-r from-white via-neutral-200 to-neutral-400 shadow-[0_0_12px_rgba(255,255,255,0.35)]" />
+          <div className="absolute inset-y-0 right-0 w-[6px] rounded-full bg-gradient-to-l from-white via-neutral-200 to-neutral-400 shadow-[0_0_12px_rgba(255,255,255,0.35)]" />
+          <div className="absolute inset-x-0 top-0 h-[6px] rounded-full bg-gradient-to-b from-white via-neutral-100 to-neutral-400 shadow-[0_0_14px_rgba(255,255,255,0.35)]" />
         </div>
 
         {/* portero */}
         <div
-          className="pointer-events-none absolute h-[28%] w-[18%] transition-all duration-500 ease-out"
+          className="pointer-events-none absolute h-[30%] w-[20%] transition-all duration-500 ease-out"
           style={{
             left: keeperZone ? `${keeperZone.x}%` : "50%",
-            top: keeperZone ? `${keeperZone.y}%` : "44%",
+            top: keeperZone ? `${keeperZone.y}%` : "46%",
             transform: `translate(-50%, -50%) rotate(${
-              keeperZone ? (keeperZone.dive as number) * 55 : 0
+              keeperZone ? (keeperZone.dive as number) * 62 : 0
             }deg)`,
           }}
         >
-          <Keeper className="h-full w-full" dive={keeperZone?.dive ?? 0} />
+          <Keeper
+            className="h-full w-full drop-shadow-[0_6px_6px_rgba(0,0,0,0.5)]"
+            dive={keeperZone?.dive ?? 0}
+            idSuffix="g"
+          />
         </div>
 
         {/* pateador */}
-        <div className="pointer-events-none absolute bottom-[2%] left-[50%] h-[30%] w-[20%] -translate-x-[150%]">
+        <div className="pointer-events-none absolute bottom-[1%] left-[50%] h-[34%] w-[22%] -translate-x-[155%]">
+          <Shadow className="absolute bottom-[2%] left-1/2 h-[7%] w-[70%] -translate-x-1/2" />
           <Striker
-            className={`h-full w-full ${busy ? "ff-kick" : ""}`}
-            color={shooterColor}
+            className={`h-full w-full drop-shadow-[0_6px_6px_rgba(0,0,0,0.5)] ${
+              busy ? "ff-kick" : ""
+            }`}
+            color={phase === "save" ? "#e11d48" : "#12a05a"}
+            dark={phase === "save" ? "#881337" : "#065f36"}
             kicking={busy}
+            idSuffix="s"
           />
         </div>
 
@@ -183,16 +211,20 @@ export default function PenaltyGame() {
         <div
           className="pointer-events-none absolute h-[11%] w-[8%] transition-all duration-700 ease-out"
           style={{
-            left: ballZone ? `${ballZone.x}%` : "42%",
-            top: ballZone ? `${ballZone.y}%` : "84%",
+            left: ballZone ? `${ballZone.x}%` : "43%",
+            top: ballZone ? `${ballZone.y}%` : "86%",
             transform: "translate(-50%, -50%)",
           }}
         >
-          <Ball className={`h-full w-full ${busy ? "ff-spin" : ""}`} />
+          <Ball
+            className={`h-full w-full drop-shadow-[0_3px_5px_rgba(0,0,0,0.6)] ${
+              busy ? "ff-spin" : ""
+            }`}
+          />
         </div>
 
         {/* zonas para tocar */}
-        <div className="absolute left-[8%] right-[8%] top-[10%] grid h-[58%] grid-cols-3 grid-rows-2 gap-1 p-1">
+        <div className="absolute left-[9%] right-[9%] top-[12%] grid h-[56%] grid-cols-3 grid-rows-2 gap-1 p-1">
           {ZONES.map((zone) => (
             <button
               key={zone.key}
@@ -200,7 +232,7 @@ export default function PenaltyGame() {
               onClick={() => play(zone.key)}
               disabled={busy || phase === "over"}
               aria-label={zone.label}
-              className="rounded-md border border-white/10 transition hover:bg-white/15 active:bg-white/25 disabled:hover:bg-transparent"
+              className="rounded-md border border-white/5 transition hover:bg-white/10 hover:shadow-[inset_0_0_20px_rgba(255,255,255,0.15)] active:bg-white/20 disabled:hover:bg-transparent disabled:hover:shadow-none"
             />
           ))}
         </div>
