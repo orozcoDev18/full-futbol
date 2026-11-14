@@ -393,3 +393,97 @@ export function qualifiedFromPrelim(
 
   return { qualified, eliminated, pending };
 }
+
+// --- Disciplina ---
+
+export interface DisciplineRow {
+  position: number;
+  playerId: string;
+  playerName: string;
+  number?: number;
+  teamId: string;
+  teamName: string;
+  yellow: number;
+  red: number;
+  /** Rojas directas más las dobles amarillas del mismo partido. */
+  sentOff: number;
+}
+
+/**
+ * Tarjetas por jugador. Dos amarillas en un mismo partido cuentan como
+ * expulsión, igual que en la cancha.
+ */
+export function getDisciplineRows(
+  events: (EngineEvent & { matchId?: string })[],
+  limit?: number,
+): DisciplineRow[] {
+  const byPlayer = new Map<string, DisciplineRow>();
+  const yellowsPerMatch = new Map<string, number>();
+
+  for (const event of events) {
+    if (event.type === "GOAL") continue;
+
+    let row = byPlayer.get(event.playerId);
+    if (!row) {
+      row = {
+        position: 0,
+        playerId: event.playerId,
+        playerName: event.player?.name ?? "Jugador",
+        number: event.player?.number,
+        teamId: event.teamId,
+        teamName: event.team?.name ?? "",
+        yellow: 0,
+        red: 0,
+        sentOff: 0,
+      };
+      byPlayer.set(event.playerId, row);
+    }
+
+    if (event.type === "RED_CARD") {
+      row.red++;
+      row.sentOff++;
+      continue;
+    }
+
+    row.yellow++;
+    const key = `${event.playerId}|${event.matchId ?? ""}`;
+    const inMatch = (yellowsPerMatch.get(key) ?? 0) + 1;
+    yellowsPerMatch.set(key, inMatch);
+    // La segunda amarilla del mismo partido es expulsión.
+    if (inMatch === 2) row.sentOff++;
+  }
+
+  const rows = [...byPlayer.values()].sort(
+    (a, b) =>
+      b.sentOff - a.sentOff ||
+      b.red - a.red ||
+      b.yellow - a.yellow ||
+      a.playerName.localeCompare(b.playerName, "es"),
+  );
+  rows.forEach((row, i) => {
+    row.position = i + 1;
+  });
+
+  return typeof limit === "number" ? rows.slice(0, limit) : rows;
+}
+
+/** Jugadores expulsados en un partido concreto (roja o doble amarilla). */
+export function sentOffInMatch(
+  events: { type: MatchEventType; playerId: string }[],
+): Set<string> {
+  const yellows = new Map<string, number>();
+  const out = new Set<string>();
+
+  for (const event of events) {
+    if (event.type === "RED_CARD") {
+      out.add(event.playerId);
+      continue;
+    }
+    if (event.type !== "YELLOW_CARD") continue;
+    const count = (yellows.get(event.playerId) ?? 0) + 1;
+    yellows.set(event.playerId, count);
+    if (count >= 2) out.add(event.playerId);
+  }
+
+  return out;
+}

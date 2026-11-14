@@ -67,6 +67,12 @@ export default async function TournamentHubPage({
       sub: "Ranking del torneo",
     },
     {
+      href: `/dashboard/${id}/disciplina`,
+      icon: "🟨",
+      title: "Tarjetas",
+      sub: "Amonestados y expulsados",
+    },
+    {
       href: `/dashboard/${id}/fase-final`,
       icon: "🏆",
       title: "Fase final",

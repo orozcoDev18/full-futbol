@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Logo } from "@/components/Logo";
 import {
+  DisciplineList,
   Empty,
   MatchesByRound,
   MatchRow,
@@ -14,6 +15,7 @@ import { prisma } from "@/lib/prisma";
 import {
   getTournamentBySlug,
   standingsByGroup,
+  tournamentDiscipline,
   tournamentScorers,
 } from "@/lib/queries";
 
@@ -24,6 +26,7 @@ const TABS = [
   { key: "goleadores", label: "Goleadores" },
   { key: "partidos", label: "Partidos" },
   { key: "final", label: "Eliminatorias" },
+  { key: "tarjetas", label: "Tarjetas" },
   { key: "noticias", label: "Noticias" },
 ] as const;
 
@@ -76,6 +79,7 @@ export default async function TorneoPublicoPage({
 
   const groups = standingsByGroup(tournament);
   const scorers = tournamentScorers(tournament, 20);
+  const discipline = tournamentDiscipline(tournament, 20);
   const topScorer = scorers[0];
   const groupMatches = tournament.matches.filter(
     (match) => match.phase === "GROUP",
@@ -201,6 +205,13 @@ export default async function TorneoPublicoPage({
               </section>
             ))}
           </div>
+        ))}
+
+      {active === "tarjetas" &&
+        (discipline.length === 0 ? (
+          <Empty>Todavía no hay tarjetas.</Empty>
+        ) : (
+          <DisciplineList rows={discipline} />
         ))}
 
       {active === "noticias" &&

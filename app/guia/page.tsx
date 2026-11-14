@@ -40,7 +40,7 @@ const PANEL_OPTIONS = [
   {
     icon: "📝",
     name: "Actas",
-    what: "Cargar el partido desde el celular: un toque por gol o tarjeta sobre el jugador.",
+    what: "Cargar el partido desde el celular: pones el marcador y asignas con un toque quién hizo cada gol y quién vio tarjeta.",
   },
   {
     icon: "📊",
@@ -61,6 +61,11 @@ const PANEL_OPTIONS = [
     icon: "🥇",
     name: "Goleadores",
     what: "Ranking de artilleros del torneo.",
+  },
+  {
+    icon: "🟨",
+    name: "Tarjetas",
+    what: "Amonestados y expulsados del torneo; dos amarillas en un partido cuentan como expulsión.",
   },
   {
     icon: "🏆",
@@ -222,8 +227,9 @@ export default function GuiaPage() {
               ¿Se puede anotar un gol sin saber quién lo hizo?
             </dt>
             <dd className="text-neutral-300">
-              Sí. En el acta, los botones + y − del marcador suman goles sin
-              jugador, para los goles en contra o los que nadie reclama.
+              Sí. El marcador lo pones tú con los botones + y −, y aparte
+              asignas quién hizo cada gol. Si asignas más goles que los del
+              marcador, la app avisa y no deja guardar hasta cuadrarlo.
             </dd>
           </div>
           <div>

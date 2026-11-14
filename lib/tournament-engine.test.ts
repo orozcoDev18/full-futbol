@@ -5,9 +5,11 @@ import {
   generateRoundRobinFixture,
   getTopScorers,
   drawPrelim,
+  getDisciplineRows,
   matchWinner,
   qualifiedFromPrelim,
   seedOrder,
+  sentOffInMatch,
   type EngineEvent,
   type EngineMatch,
 } from "./tournament-engine";
@@ -264,5 +266,52 @@ assert.deepEqual(
 );
 assert.deepEqual(prelimResult.eliminated, ["b", "c"]);
 assert.equal(prelimResult.pending, 1, "el cruce sin jugar queda pendiente");
+
+// --- Disciplina ---
+const card = (
+  type: "YELLOW_CARD" | "RED_CARD",
+  id: string,
+  name: string,
+  matchId: string,
+): EngineEvent & { matchId: string } => ({
+  type,
+  playerId: id,
+  teamId: "a",
+  matchId,
+  player: { id, name, number: 5 },
+  team: { id: "a", name: "Alfa" },
+});
+
+const discipline = getDisciplineRows([
+  card("YELLOW_CARD", "p1", "Ana", "m1"),
+  card("YELLOW_CARD", "p1", "Ana", "m1"), // doble amarilla: expulsada
+  card("YELLOW_CARD", "p2", "Bea", "m1"),
+  card("YELLOW_CARD", "p2", "Bea", "m2"), // amarillas en partidos distintos
+  card("RED_CARD", "p3", "Cris", "m2"),
+  goal("p9", "Zoe", "a", "Alfa"), // los goles no cuentan aquí
+]);
+assert.deepEqual(
+  discipline.map((r) => [r.playerName, r.yellow, r.red, r.sentOff]),
+  [
+    ["Cris", 0, 1, 1],
+    ["Ana", 2, 0, 1],
+    ["Bea", 2, 0, 0],
+  ],
+  "expulsados primero (la roja directa antes que la doble amarilla)",
+);
+assert.deepEqual(discipline.map((r) => r.position), [1, 2, 3]);
+assert.equal(getDisciplineRows([]).length, 0);
+assert.equal(getDisciplineRows(discipline.length ? [] : [], 3).length, 0);
+
+assert.deepEqual(
+  [...sentOffInMatch([
+    { type: "YELLOW_CARD", playerId: "p1" },
+    { type: "YELLOW_CARD", playerId: "p1" },
+    { type: "YELLOW_CARD", playerId: "p2" },
+    { type: "RED_CARD", playerId: "p3" },
+  ])].sort(),
+  ["p1", "p3"],
+  "una sola amarilla no expulsa",
+);
 
 console.log("tournament-engine: todo OK");

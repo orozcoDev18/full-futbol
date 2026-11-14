@@ -2,6 +2,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
 import {
   calculateStandings,
+  getDisciplineRows,
   getTopScorers,
   type StandingRow,
 } from "./tournament-engine";
@@ -104,4 +105,17 @@ export function seedFromStandings(
   }
 
   return Array.from({ length: size }, (_, i) => seeded[i] ?? null);
+}
+
+/** Tarjetas del torneo, por jugador. */
+export function tournamentDiscipline(
+  tournament: FullTournament,
+  limit?: number,
+) {
+  return getDisciplineRows(
+    tournament.matches.flatMap((match) =>
+      match.events.map((event) => ({ ...event, matchId: match.id })),
+    ),
+    limit,
+  );
 }

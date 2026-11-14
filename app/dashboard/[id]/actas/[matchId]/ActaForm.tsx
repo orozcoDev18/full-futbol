@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useFormStatus } from "react-dom";
-import type { MatchEventType } from "@/lib/tournament-engine";
+import { sentOffInMatch, type MatchEventType } from "@/lib/tournament-engine";
 import { saveActa } from "../actions";
 
 interface ActaPlayer {
@@ -30,11 +30,15 @@ const EVENT_ICON: Record<MatchEventType, string> = {
   RED_CARD: "🟥",
 };
 
-function SubmitButton() {
+function SubmitButton({ blocked }: { blocked: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type="submit" className="btn-primary w-full" disabled={pending}>
-      {pending ? "Guardando…" : "Guardar acta"}
+    <button
+      type="submit"
+      className="btn-primary w-full"
+      disabled={pending || blocked}
+    >
+      {pending ? "Guardando…" : blocked ? "Cuadra el marcador" : "Guardar acta"}
     </button>
   );
 }
@@ -77,6 +81,11 @@ export default function ActaForm({
     return map;
   }, [home, away]);
 
+  const sentOff = useMemo(
+    () => sentOffInMatch(events),
+    [events],
+  );
+
   const assigned = (teamId: string) =>
     events.filter((event) => event.type === "GOAL" && event.teamId === teamId)
       .length;
@@ -86,21 +95,26 @@ export default function ActaForm({
       ...prev,
       { uid: `${Date.now()}-${Math.random()}`, playerId, teamId, type },
     ]);
-    if (type !== "GOAL") return;
-    if (teamId === home.id) setHomeGoals((goals) => goals + 1);
-    else setAwayGoals((goals) => goals + 1);
   }
 
   function removeEvent(uid: string) {
-    const target = events.find((event) => event.uid === uid);
     setEvents((prev) => prev.filter((event) => event.uid !== uid));
-    if (!target || target.type !== "GOAL") return;
-    if (target.teamId === home.id) {
-      setHomeGoals((goals) => Math.max(0, goals - 1));
-    } else {
-      setAwayGoals((goals) => Math.max(0, goals - 1));
-    }
   }
+
+  /** Pone el marcador igual a los goles que ya tienen autor. */
+  function matchScoreToGoals() {
+    setHomeGoals(assigned(home.id));
+    setAwayGoals(assigned(away.id));
+  }
+
+  const missingHome = assigned(home.id) - homeGoals;
+  const missingAway = assigned(away.id) - awayGoals;
+  // Más autores que goles es un error; más goles que autores es normal
+  // (en contra, o nadie reclamó el gol).
+  const tooManyAuthors = missingHome > 0 || missingAway > 0;
+  const unassigned =
+    Math.max(0, -missingHome) + Math.max(0, -missingAway);
+  const mismatch = tooManyAuthors;
 
   const teamPanel = (team: ActaTeam) => (
     <section className="card" key={team.id}>
@@ -130,6 +144,11 @@ export default function ActaForm({
                 {player.name}
                 {goals > 0 && (
                   <span className="ml-1 text-neutral-400">⚽×{goals}</span>
+                )}
+                {sentOff.has(player.id) && (
+                  <span className="ml-1 font-semibold text-red-400">
+                    expulsado
+                  </span>
                 )}
               </span>
               <button
@@ -183,23 +202,36 @@ export default function ActaForm({
 
       <section className="card">
         <div className="flex items-center justify-center gap-3">
-          <ScoreBox
-            name={home.name}
-            goals={homeGoals}
-            min={assigned(home.id)}
-            onChange={setHomeGoals}
-          />
+          <ScoreBox name={home.name} goals={homeGoals} onChange={setHomeGoals} />
           <span className="text-2xl font-bold text-neutral-600">:</span>
-          <ScoreBox
-            name={away.name}
-            goals={awayGoals}
-            min={assigned(away.id)}
-            onChange={setAwayGoals}
-          />
+          <ScoreBox name={away.name} goals={awayGoals} onChange={setAwayGoals} />
         </div>
         <p className="mt-2 text-center text-xs text-neutral-500">
-          Usa +/- solo para goles sin jugador (en contra o sin identificar).
+          El marcador lo pones tú. Abajo asignas quién hizo cada gol.
         </p>
+
+        {mismatch ? (
+          <div className="mt-3 rounded-xl border border-red-500/50 bg-red-500/10 px-3 py-2.5 text-center">
+            <p className="text-sm text-red-300">
+              Hay más goles con autor ({assigned(home.id)} - {assigned(away.id)})
+              que los del marcador.
+            </p>
+            <button
+              type="button"
+              onClick={matchScoreToGoals}
+              className="btn-ghost mt-2 px-3 py-1.5 text-sm"
+            >
+              Poner el marcador en {assigned(home.id)} - {assigned(away.id)}
+            </button>
+          </div>
+        ) : (
+          unassigned > 0 && (
+            <p className="mt-3 text-center text-xs text-neutral-400">
+              {unassigned} {unassigned === 1 ? "gol" : "goles"} sin autor (en
+              contra o sin identificar).
+            </p>
+          )
+        )}
       </section>
 
       {teamPanel(home)}
@@ -273,7 +305,7 @@ export default function ActaForm({
           />
           Partido jugado (cuenta para la tabla)
         </label>
-        <SubmitButton />
+        <SubmitButton blocked={mismatch} />
       </div>
     </form>
   );
@@ -282,12 +314,10 @@ export default function ActaForm({
 function ScoreBox({
   name,
   goals,
-  min,
   onChange,
 }: {
   name: string;
   goals: number;
-  min: number;
   onChange: (value: number) => void;
 }) {
   return (
@@ -296,8 +326,8 @@ function ScoreBox({
       <div className="flex items-center justify-center gap-2">
         <button
           type="button"
-          onClick={() => onChange(Math.max(min, goals - 1))}
-          disabled={goals <= min}
+          onClick={() => onChange(Math.max(0, goals - 1))}
+          disabled={goals <= 0}
           className="btn-ghost h-10 w-10 p-0 text-lg"
           aria-label={`Quitar gol a ${name}`}
         >

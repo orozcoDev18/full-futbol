@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ScorerRow } from "@/lib/tournament-engine";
+import type { DisciplineRow, ScorerRow } from "@/lib/tournament-engine";
 
 export const PHASE_LABEL: Record<string, string> = {
   PRELIM: "Fase previa",
@@ -183,5 +183,47 @@ export function Empty({ children }: { children: React.ReactNode }) {
     <p className="rounded-2xl border border-dashed border-neutral-800 py-10 text-center text-sm text-neutral-500">
       {children}
     </p>
+  );
+}
+
+export function DisciplineList({ rows }: { rows: DisciplineRow[] }) {
+  return (
+    <ul className="space-y-2">
+      {rows.map((row) => (
+        <li
+          key={row.playerId}
+          className={`flex items-center gap-3 rounded-2xl border px-3 py-3 ${
+            row.sentOff > 0
+              ? "border-red-500/40 bg-red-500/5"
+              : "border-neutral-800 bg-neutral-900/60"
+          }`}
+        >
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-semibold">
+              {row.playerName}
+              {row.sentOff > 0 && (
+                <span className="ml-2 text-xs font-bold uppercase text-red-400">
+                  {row.sentOff === 1
+                    ? "expulsado"
+                    : `${row.sentOff} expulsiones`}
+                </span>
+              )}
+            </span>
+            <span className="block truncate text-xs text-neutral-400">
+              {row.teamName}
+              {row.number ? ` · N° ${row.number}` : ""}
+            </span>
+          </span>
+          <span className="flex shrink-0 items-center gap-3 text-sm tabular-nums">
+            <span className="flex items-center gap-1" title="Amarillas">
+              🟨 {row.yellow}
+            </span>
+            <span className="flex items-center gap-1" title="Rojas">
+              🟥 {row.red}
+            </span>
+          </span>
+        </li>
+      ))}
+    </ul>
   );
 }
