@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireTournament } from "@/lib/org";
 import { prisma } from "@/lib/prisma";
-import { generateRoundRobinFixture } from "@/lib/tournament-engine";
+import { getTournamentById } from "@/lib/queries";
+import {
+  generateRoundRobinFixture,
+  qualifiedFromPrelim,
+} from "@/lib/tournament-engine";
 
 export interface DrawGroup {
   name: string;
@@ -41,6 +45,23 @@ export async function saveDraw(formData: FormData) {
   });
   if (teams.length !== drawnIds.length) {
     throw new Error("Algún equipo no pertenece al torneo");
+  }
+
+  // Con fase previa, a los grupos solo entran los que la superaron.
+  const tournament = await getTournamentById(tournamentId);
+  if (!tournament) throw new Error("Torneo no encontrado");
+  const prelim = qualifiedFromPrelim(
+    tournament.matches,
+    tournament.teams.map((team) => team.id),
+  );
+  if (prelim.pending > 0) {
+    throw new Error(
+      `Faltan ${prelim.pending} cruces de la fase previa por resolver`,
+    );
+  }
+  const eliminated = new Set(prelim.eliminated);
+  if (drawnIds.some((teamId) => eliminated.has(teamId))) {
+    throw new Error("Hay equipos eliminados en la fase previa dentro del sorteo");
   }
   if (groups.some((group) => group.teamIds.length < 2)) {
     throw new Error("Cada grupo necesita al menos 2 equipos");
@@ -85,4 +106,66 @@ export async function saveDraw(formData: FormData) {
   revalidatePath(`/dashboard/${tournamentId}`, "layout");
   if (tournament) revalidatePath(`/torneo/${tournament.slug}`);
   redirect(`/dashboard/${tournamentId}/resultados`);
+}
+
+/**
+ * Fase previa: eliminatoria a un partido entre los inscritos.
+ * Rehacerla borra todo lo que venía después (grupos y fase final), porque
+ * esos cruces se armaron con equipos que quizá ya no siguen en el torneo.
+ */
+export async function savePrelim(formData: FormData) {
+  const tournamentId = String(formData.get("tournamentId") ?? "");
+  await requireTournament(tournamentId);
+
+  let pairings: { homeTeamId: string; awayTeamId: string }[];
+  try {
+    pairings = JSON.parse(String(formData.get("pairings") ?? "[]"));
+  } catch {
+    throw new Error("Sorteo no válido");
+  }
+  if (!Array.isArray(pairings) || pairings.length === 0) {
+    throw new Error("Hacen falta al menos dos equipos para la fase previa");
+  }
+
+  const ids = pairings.flatMap((pair) => [pair.homeTeamId, pair.awayTeamId]);
+  if (new Set(ids).size !== ids.length) {
+    throw new Error("Hay equipos repetidos en el sorteo");
+  }
+
+  const teams = await prisma.team.findMany({
+    where: { tournamentId, id: { in: ids } },
+    select: { id: true },
+  });
+  if (teams.length !== ids.length) {
+    throw new Error("Algún equipo no pertenece al torneo");
+  }
+
+  await prisma.$transaction([
+    prisma.match.deleteMany({ where: { tournamentId } }),
+    prisma.team.updateMany({
+      where: { tournamentId },
+      data: { groupName: null },
+    }),
+    prisma.match.createMany({
+      data: pairings.map((pair, index) => ({
+        tournamentId,
+        phase: "PRELIM" as const,
+        label: `Previa ${index + 1}`,
+        homeTeamId: pair.homeTeamId,
+        awayTeamId: pair.awayTeamId,
+      })),
+    }),
+    prisma.tournament.update({
+      where: { id: tournamentId },
+      data: { championTeamId: null, status: "ACTIVE", groupCount: 1 },
+    }),
+  ]);
+
+  const tournament = await prisma.tournament.findUnique({
+    where: { id: tournamentId },
+    select: { slug: true },
+  });
+  revalidatePath(`/dashboard/${tournamentId}`, "layout");
+  if (tournament) revalidatePath(`/torneo/${tournament.slug}`);
+  redirect(`/dashboard/${tournamentId}/proximos`);
 }
