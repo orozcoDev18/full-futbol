@@ -233,18 +233,6 @@ export default function GuiaPage() {
               sorteo.
             </dd>
           </div>
-          <div>
-            <dt className="font-bold text-white">
-              ¿Cómo agrego otro organizador?
-            </dt>
-            <dd className="text-neutral-300">
-              Desde la carpeta del proyecto:{" "}
-              <code className="text-pitch-light">
-                npm run create-admin -- usuario clave ADMIN
-              </code>
-              .
-            </dd>
-          </div>
         </dl>
       </section>
 
